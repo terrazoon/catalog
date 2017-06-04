@@ -1,4 +1,4 @@
-from flask import Flask, render_template, url_for, redirect, request
+from flask import Flask, render_template, url_for, redirect, request, flash, jsonify
 app = Flask(__name__)
 
 
@@ -13,7 +13,26 @@ DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
 
-
+#REST API endpoint
+@app.route('/restaurants/<int:restaurant_id>/menu/JSON')
+def restaurantMenuJSON(restaurant_id):
+    restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
+    items = session.query(MenuItem).filter_by(restaurant_id=restaurant_id).all()
+    return jsonify(MenuItems=[i.serialize for i in items])
+    
+@app.route('/restaurants/<int:restaurant_id>/menu/<int:menu_id>/JSON/')
+def restaurantMenuItemJSON(restaurant_id, menu_id):
+    restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
+    print "did we find the restaurant? %s" % restaurant.name
+   
+    items = session.query(MenuItem).filter_by(restaurant_id=restaurant_id).all()
+    for i in items:
+       print "found an item %s %s" % (i.name, i.id)
+   
+       if i.id == menu_id:
+           return jsonify(MenuItems=[i.serialize])
+           
+    
 @app.route('/restaurants/<int:restaurant_id>/new/', methods=['GET', 'POST'])
 def newMenuItem(restaurant_id):
     if request.method == 'POST':
@@ -21,6 +40,7 @@ def newMenuItem(restaurant_id):
             name=request.form['name'], restaurant_id=restaurant_id)
         session.add(newItem)
         session.commit()
+        flash("New menu item created!")
         return redirect(url_for('restaurantMenu', restaurant_id=restaurant_id))
     else:
         return render_template('newmenuitem.html', restaurant_id=restaurant_id)    
@@ -29,11 +49,14 @@ def newMenuItem(restaurant_id):
            methods=['GET', 'POST'])
 def editMenuItem(restaurant_id, MenuID):
     editedItem = session.query(MenuItem).filter_by(id=MenuID).one()
+    
+    
     if request.method == 'POST':
         if request.form['name']:
             editedItem.name = request.form['name']
         session.add(editedItem)
         session.commit()
+        flash("item edited")
         return redirect(url_for('restaurantMenu', restaurant_id=restaurant_id))
     else:
         # USE THE RENDER_TEMPLATE FUNCTION BELOW TO SEE THE VARIABLES YOU
@@ -52,6 +75,7 @@ def deleteMenuItem(restaurant_id, MenuID):
         print "method is POST"
         session.delete(item)
         session.commit()
+        flash("item deleted")
         return redirect(url_for('restaurantMenu', restaurant_id=restaurant_id))
     else:
         # USE THE RENDER_TEMPLATE FUNCTION BELOW TO SEE THE VARIABLES YOU
@@ -70,6 +94,6 @@ def restaurantMenu(restaurant_id):
     
     
 if __name__ == '__main__':
-    print "hit main"
+    app.secret_key='todo_put_good_secret_key_here'
     app.debug = True
     app.run(host = '0.0.0.0', port = 5000)
