@@ -29,9 +29,9 @@
           {{i.price}}
           </div>
         <br>
-        <a href = {{url_for('editMenuItem',restaurant_id=restaurant.id, MenuID=i.id) }}>Edit</a>
+        <a href = {{url_for('editMenuItem',restaurant_id=restaurant.id, menu_id=i.id) }}>Edit</a>
         <br>
-        <a href = {{url_for('deleteMenuItem',restaurant_id=restaurant.id, MenuID=i.id) }}>Delete</a>
+        <a href = {{url_for('deleteMenuItem',restaurant_id=restaurant.id, menu_id=i.id) }}>Delete</a>
         <br>
         {% endfor %}
     </p>
